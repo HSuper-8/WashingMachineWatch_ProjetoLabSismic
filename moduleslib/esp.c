@@ -34,13 +34,13 @@ void esp_sendemail(){
 	esp_cmd("AT+CIPSTART=4\"TCP\",\"" EMAILFROM "\"," EMAILFROM_PORT); 
 	esp_cmd("AT + CIPSEND = 4,"NBYTES_MESSAGE);   //
 
-	// Verificar o porquê dessa forma
-	esp_cmd("EHLO 192.168.1.123");
+	// Verificar o porquê dessa forma, verificar no smtp2go
+	//esp_cmd("EHLO 192.168.1.123");
 	esp_cmd("AUTH LOGIN");
     esp_cmd("c2FkZGFtNDIwMUBnbWFpbC5jb20=");    // email ase 64 format
     esp_cmd(" tu934yt89ert83=");				// password base 64 format
-    esp_cmd("MAIL FROM:<saddam4201@gmail.com>");
-    esp_cmd("RCPT To:<saddam4201@gmail.com>");
+    esp_cmd("MAIL FROM:<"EMAILFROM">");
+    esp_cmd("RCPT To:<"EMAILTO">");
     esp_cmd("DATA");
     esp_cmd(MESSAGE);
     esp_cmd("AT+CIPSEND=6");
