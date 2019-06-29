@@ -5,14 +5,18 @@
 #include <string.h>
 
 //#define SSID ""
-//#define password ""
-#define EMAILAPP "mail.smtp2go.com"
-#define EMAIL_PORT "2525"
+//#define WIFIPASS ""
 
-#define EMAILFROM "WashingMachineWatch@gmail.com"
+#define IP "172.20.10.7"
 
-#define EMAILTO
+#define EMAILFROM "mail.smtp2go.com"
+#define EMAILFROMPORT "2525"
+
+#define EMAILTO "hevelyn.sthefany@gmail.com"
 #define EMAILTOPORT
+
+#define EMAIL64  "d213cHJvakBnbWFpbC5jb20="
+#define PASSWORD64  "d213c2lzbWlj"
 
 #define NBYTES_MESSAGE
 #define MESSAGE "Trabalho da Lavadora terminado. Suas roupas estão prontas!" 

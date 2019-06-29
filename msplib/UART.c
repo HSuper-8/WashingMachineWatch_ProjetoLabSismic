@@ -1,8 +1,6 @@
 #include "UART.h"
 
-void UCA3_Config(int baudRate, int parity,
-                 int isMSB, int nStops)
-{
+void UCA3_Config(int baudRate, int parity, int isMSB, int nStops){
     UCA3CTLW0  = UCSWRST;
 
     UCA3CTLW0  = (isMSB?  UCMSB : 0)               |
@@ -20,22 +18,19 @@ void UCA3_Config(int baudRate, int parity,
     P6SEL1 &= ~(BIT0|BIT1);
 
     UCA3CTLW0  &= ~UCSWRST;
-
 }
 
 void UCA3_Send(uint8_t data){
     while(!(UCA3IFG & UCTXIFG));
-
     UCA3TXBUF = data;
 }
 
 uint8_t UCA3_Get(){
     while(!(UCA3IFG & UCRXIFG));
-
     return UCA3RXBUF;
-
 }
 
+/*
 void UART_BbSend(uint8_t data){
     // 9600 bps, no parity, LSB_first, 1 bit stop
     TA0CTL = TASSEL__SMCLK| TACLR|
@@ -120,6 +115,6 @@ uint8_t UART_BbGet(){
     return data;
 }
 
-
+*/
 
 
