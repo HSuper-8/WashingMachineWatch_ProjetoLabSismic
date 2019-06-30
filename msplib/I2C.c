@@ -147,9 +147,10 @@ void I2C_B2_write_byte(uint8_t slaveAddr, char data){
     while(UCB2CTLW0 & UCTXSTP);   // Wait Stop
 }
 
-int I2C_B2_read_byte(){
+uint8_t I2C_B2_read_byte(uint8_t slaveAddr){
     char data;
 
+    UCB2I2CSA = slaveAddr;
     UCB2CTLW0 &= ~UCTR;
     UCB2CTLW0 |= UCTXSTT;
 

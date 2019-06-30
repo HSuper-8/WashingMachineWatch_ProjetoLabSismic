@@ -5,7 +5,8 @@
 #include <stdint.h>
 #include <string.h>
 
-
+#define MasterAddr                       (0x0042)
+#define setMaster                        (   1   )
 #define UCMODE__I2C                      (UCMODE_3)    // Communication I2C type
 #define MASTER_ADDR                      (0x0034)
 #define ERROR                            (0x0034)
@@ -24,8 +25,6 @@ void I2C_B1_write_byte(uint8_t slaveAddr, char data);
 
 void I2C_B2_write_byte(uint8_t slaveAddr, char data);
 
-int  I2C_B2_read_byte();
+uint8_t  I2C_B2_read_byte(uint8_t slaveAddr);
 
 #endif
-
-
