@@ -27,4 +27,6 @@ void I2C_B2_write_byte(uint8_t slaveAddr, char data);
 
 uint8_t  I2C_B2_read_byte(uint8_t slaveAddr);
 
+void B2_STT_STP(uint8_t addr);
+
 #endif

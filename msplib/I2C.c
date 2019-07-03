@@ -167,4 +167,21 @@ uint8_t I2C_B2_read_byte(uint8_t slaveAddr){
     return data;
 }
 
+void B2_STT_STP(uint8_t addr){
+    int x=0;
+
+    UCB2I2CSA = addr;
+
+    while (x<5){
+        UCB2CTLW0 |=    UCTR    |
+                        UCTXSTT;
+        while (!(UCB2IFG & UCTXIFG));
+        UCB2CTLW0 |= UCTXSTP;
+        delay(200);
+        if (!(UCB2CTLW0 & UCTXSTP))   break;
+        x++;
+    }
+    while ( (UCB0CTL1 & UCTXSTP));
+}
+
 
