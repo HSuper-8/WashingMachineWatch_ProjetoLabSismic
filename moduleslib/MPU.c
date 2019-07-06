@@ -1,6 +1,8 @@
 #include "MPU.h"
 #include "I2C.h"
 
+int offset_int[6];                  //Offset para accel x y z e gyro x y z
+
 // Setup Port - setups I/O ports
 void setupPorts(){
     P1DIR |= BIT0;
@@ -46,8 +48,59 @@ void waitFor(unsigned int time_ms){
 void mpuSetByte(uint8_t addr, uint8_t data)
 {
     I2C_B2_write_byte(MPU6050_DEFAULT_ADDRESS, addr);
+    delay(50);
     I2C_B2_write_byte(MPU6050_DEFAULT_ADDRESS, data);
 }
+
+void MPU_I2C_B2_write_byte(uint8_t addr, char data){
+    UCB2I2CSA = MPU6050_DEFAULT_ADDRESS;
+    UCB2CTLW0 |= UCTR;
+    UCB2CTLW0 |= UCTXSTT;
+
+    // RA address
+    while(!(UCB2IFG & UCTXIFG0));
+    UCB2TXBUF = addr;
+
+    while(!(UCB2IFG & UCTXIFG0) && !(UCB2IFG & UCNACKIFG));
+
+    if(UCB2IFG & UCNACKIFG) {
+        UCB2CTLW0 |= UCTXSTP;
+        while(UCB2CTLW0 & UCTXSTP);
+            return ERROR;
+    }
+
+    // RA data
+
+    while(!(UCB2IFG & UCTXIFG0));
+
+    UCB2TXBUF = data;
+
+    delay(50);
+
+    while(!(UCB2IFG & UCTXIFG0) && !(UCB2IFG & UCNACKIFG));
+
+    if(UCB2IFG & UCNACKIFG) {
+        UCB2CTLW0 |= UCTXSTP;
+        while(UCB2CTLW0 & UCTXSTP);
+            return ERROR;
+    }
+
+    UCB2IFG &= ~UCTXIFG0;
+
+    UCB2CTLW0 |= UCTXSTP;
+    while(UCB2CTLW0 & UCTXSTP);   // Wait Stop
+
+    delay(50);
+}
+
+// MPU get byte - writes register address
+// from MPU's and read data from it
+uint8_t mpuGetByte(uint8_t addr){
+    I2C_B2_write_byte(MPU6050_DEFAULT_ADDRESS, addr);
+    delay(50);
+    return I2C_B2_read_byte(MPU6050_DEFAULT_ADDRESS);
+}
+
 uint8_t MPU_I2C_B2_read_byte(uint8_t addr){
     int8_t data;
 
@@ -66,11 +119,11 @@ uint8_t MPU_I2C_B2_read_byte(uint8_t addr){
             P1OUT |= BIT0;
             while(1);
     }
+    while(!(UCB2IFG & UCTXIFG0));                   // Awaits transmition finish
 
     UCB2CTLW0 &= ~UCTR;
     UCB2CTLW0 |= UCTXSTT;
 
-    while(!(UCB2IFG & UCTXIFG0));                   // Awaits transmition finish
     while (UCB2CTLW0 & UCTXSTT);                    // Awaits start of communication
 
     UCB2CTLW0 |= UCTXSTP;
@@ -82,11 +135,6 @@ uint8_t MPU_I2C_B2_read_byte(uint8_t addr){
     return data;
 }
 
-// MPU get byte - writes register address
-// from MPU's and read data from it
-uint8_t mpuGetByte(uint8_t addr){
-    return MPU_I2C_B2_read_byte(addr);
-}
 
 // MPU read nibble - read length times starting at "addr"
 // from MPU and write it on "data"
@@ -183,7 +231,6 @@ uint8_t mpuSelfTest(void){
 void mpuOffset (unsigned char gyro, unsigned char accl){
 
     unsigned int j;
-    int offset_int[6];                  //Offset para accel x y z e gyro x y z
     unsigned char aux[14];
     long abx,aby,abz,gbx,gby,gbz;
 
@@ -194,7 +241,8 @@ void mpuOffset (unsigned char gyro, unsigned char accl){
     mpuSetByte(MPU6050_RA_PWR_MGMT_1, 0x01);    //Retira do modo sleep e seleciona o clock do PLL do gyro eixo x
     waitFor(250);
 
-    mpuScales(gyro,accl);
+    mpuSetByte(MPU6050_RA_GYRO_CONFIG , gyro<<3);
+    mpuSetByte(MPU6050_RA_ACCEL_CONFIG, accl<<3);
     mpuSetByte(MPU6050_RA_CONFIG, 0x01);        //Seleciona a maior banda possivel para os filtros passa baixo e o giroscópio operara em 1khz
     mpuSetByte(MPU6050_RA_SMPLRT_DIV, 0x00);    //Taxa de amostragem em 1kHz
 

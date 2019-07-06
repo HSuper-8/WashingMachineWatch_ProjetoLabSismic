@@ -398,6 +398,7 @@
 #define RECEIVER        01
 
 float           ACCEL[3],GYRO[3];      //converted value
+extern      int offset_int[6];                   //Offset para accel x y z e gyro x y z
 
 //Functions ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void    setupPorts          (void);
@@ -405,6 +406,7 @@ void    setupTimerA0        (void);
 void    waitFor             (unsigned int time_ms);
 void    mpuSetByte          (uint8_t addr, uint8_t data);
 uint8_t MPU_I2C_B2_read_byte(uint8_t addr);
+void    MPU_I2C_B2_write_byte(uint8_t addr, char data);
 uint8_t mpuGetByte          (uint8_t addr);
 void    mpuRead_nb          (uint8_t addr, uint8_t * data, uint8_t length);
 uint8_t mpuSelfTest         (void);

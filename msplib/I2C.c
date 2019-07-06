@@ -11,13 +11,9 @@ void I2C_config_B1(int isMaster, uint8_t ownAddr,
 
     P5SEL0 |=  BIT0;
     P5SEL1 &= ~BIT0;
-    P5REN  |=  BIT0;
-    P5OUT  |=  BIT0;
 
     P5SEL0 |=  BIT1;
     P5SEL1 &= ~BIT1;
-    P5REN  |=  BIT1;
-    P5OUT  |=  BIT1;
 
     UCB1CTLW0 = UCSWRST;
 
@@ -59,13 +55,9 @@ void I2C_config_B2(int isMaster, uint8_t ownAddr,
 
     P7SEL0 |=  BIT0;
     P7SEL1 &= ~BIT0;
-    P7REN  |=  BIT0;
-    P7OUT  |=  BIT0;
 
     P7SEL0 |=  BIT1;
     P7SEL1 &= ~BIT1;
-    P7REN  |=  BIT1;
-    P7OUT  |=  BIT1;
 
     UCB2CTLW0 = UCSWRST;
 
@@ -175,13 +167,13 @@ void B2_STT_STP(uint8_t addr){
     while (x<5){
         UCB2CTLW0 |=    UCTR    |
                         UCTXSTT;
-        while (!(UCB2IFG & UCTXIFG));
+        while (!(UCB2IFG & UCTXIFG0));
         UCB2CTLW0 |= UCTXSTP;
         delay(200);
         if (!(UCB2CTLW0 & UCTXSTP))   break;
         x++;
     }
-    while ( (UCB0CTL1 & UCTXSTP));
+    while ( (UCB2CTLW0 & UCTXSTP));
 }
 
 
