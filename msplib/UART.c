@@ -1,8 +1,6 @@
 #include "UART.h"
 
-void UCA3_Config(int baudRate, int parity,
-                 int isMSB, int nStops)
-{
+void UCA3_Config(int baudRate, int parity, int isMSB, int nStops){
     UCA3CTLW0  = UCSWRST;
 
     UCA3CTLW0  = (isMSB?  UCMSB : 0)               |
@@ -16,26 +14,33 @@ void UCA3_Config(int baudRate, int parity,
     UCA3BRW = brDiv>>3;
     UCA3MCTLW = (brDiv & 0x07)<<1;
 
+    UCA3IE |= UCRXIE;
+
     P6SEL0 |=  (BIT0|BIT1);
     P6SEL1 &= ~(BIT0|BIT1);
 
     UCA3CTLW0  &= ~UCSWRST;
-
 }
 
-void UCA3_Send(uint8_t data){
+void UCA3_Send(unsigned char data){
     while(!(UCA3IFG & UCTXIFG));
-
     UCA3TXBUF = data;
 }
 
-uint8_t UCA3_Get(){
-    while(!(UCA3IFG & UCRXIFG));
-
-    return UCA3RXBUF;
-
+void UCA3_SendStr(char* str){
+    while(*str != '\n'){
+        UCA3_Send(*str);
+        str ++;
+    }
+    UCA3_Send(*str);
 }
 
+char UCA3_Get(){
+    while(!(UCA3IFG & UCRXIFG));
+    return UCA3RXBUF;
+}
+
+/*
 void UART_BbSend(uint8_t data){
     // 9600 bps, no parity, LSB_first, 1 bit stop
     TA0CTL = TASSEL__SMCLK| TACLR|
@@ -120,6 +125,5 @@ uint8_t UART_BbGet(){
     return data;
 }
 
-
-
+*/
 

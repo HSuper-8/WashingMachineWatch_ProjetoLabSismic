@@ -1,32 +1,69 @@
 #include "esp.h"
-#include "../msplib/UART.h"
+#include "UART.h"
 
+char RET[200]={0};
+unsigned char RX = 0;
+int i=0;
+int val=0;
+
+int CIPCLOSE=0;
+int AT=0;
+int RST=0;
 
 // BRCLK 		Baud Rate 	UCOS16 		UCBRx 	UCBRFx 		UCBRSx
 // 1000000 	    115200 		0 			8 		- 			0xD6
+void delay(int t){
+    while(t--);
+}
 
 void esp_config(){
-	UCA3_Config(baudRate, 0, 0, 1);
+	UCA3_Config(115200, 0, 0, 1);
 }
 
-void esp_cmd(const char * cmd){
-  	for(int i = 0; i < strlen(cmd); i++)
-	    UCA3_Send(cmd[i]);
+void clear_buffer(){
+    int j = 0;
+    for(j=199; j>=0; j--)
+        RET[j] = 0;
+    i = 0;
+    RX = 0;
 }
 
-void esp_comunicationOK(){
-	esp_cmd("AT");					// AT—Tests AT Startup 
-	const char* resp = esp_resp();
-	if(!(strcmp(resp, "OK"))) printf("Comunicação OK com esp8266\n");
-	else 					  printf("Sem comunicação com esp8266\n");
+int esp_cmd(char* cmd, int t, char* ret){
+
+    UCA3_SendStr(cmd);
+
+
+	delay(t);
+	if(strstr(RET, ret) != NULL){
+	    AT=1;
+	    //clear_buffer();
+	    return 1;
+	}
+	//clear_buffer();
+    return 0;
 }
 
 void esp_init(){
-	esp_cmd("AT\r\n");					// AT—Tests AT Startup 
-	esp_cmd("AT+CIPMODE=3\r\n");		// 0: normal transmission mode. 
-	esp_cmd("AT+CWQAP\r\n");			// Disconnects from the AP 
-	esp_cmd("AT+CWJAP=\"" SSID "\",\""WIFIPASS"\"\r\n");  // connecting wifi
-	esp_cmd("AT+CIFSR\r\n");			// Gets the local IP address 
+	esp_cmd("AT\r\n", 1000, "OK");		        // AT—Tests AT Startup
+	if(strstr(RET, "OK") != NULL) {
+	    AT=1;
+	}
+	AT=0;
+	clear_buffer();
+
+	esp_cmd("AT+CIPCLOSE\r\n",1000,"OK");       //Closes the TCP/UDP/SSL Connection
+	if(strstr(RET, "OK")) CIPCLOSE=1;
+	clear_buffer();
+
+	val = esp_cmd("AT+RST\r\n",2000,"ready");   //Restarts the Module
+	if(strstr(RET, "ready")) RST=1;
+	clear_buffer();
+
+	esp_cmd("AT+CWMODE=3\r\n",1000,"OK");
+	clear_buffer();
+	esp_cmd("AT+CWJAP=\"" SSID "\",\""WIFIPASS"\"\r\n",7000,"OK");  // connecting wifi
+	clear_buffer();
+	esp_cmd("AT+CIFSR\r\n",1000,"");			// Gets the local IP address
 
 	//esp_cmd(AT+CIPSTART=\"TCP\",\"" SRV_ADDR "\"," SRV_PORT); 
 	// TCP: connection type: TCP
@@ -34,27 +71,30 @@ void esp_init(){
 	// SRV_PORT (defined)  remote port number
 }
 
-const char* esp_resp(){
-	return UCA3_Get();
+void esp_sendemail(){
+	esp_cmd("AT+CIPMUX=1\r\n", 1000, "OK");
+	esp_cmd("AT + CIPSERVER = 1,"SRV_PORT"\r\n", 1000, "OK");
+	esp_cmd("AT+CIPSTART=4,\"TCP\",\"" SMTP2GO "\"," SMTP2GOPORT"\r\n", 1000, "OK");
+	esp_cmd("AT + CIPSEND = 4,"NBYTES_MESSAGE"\r\n", 1000, "");
+
+	// SMTP Commands Reference
+	UCA3_SendStr("EHLO"IP);
+	UCA3_SendStr("AUTH LOGIN");
+	UCA3_SendStr(EMAIL64);    				// email ase 64 format  (LOGIN em smtp2go)
+	UCA3_SendStr(" "PASSWORD64);				// password base 64 format
+	UCA3_SendStr("MAIL FROM:<"EMAILFROM">");
+	UCA3_SendStr("RCPT To:<"EMAILTO">");
+	UCA3_SendStr("DATA");
+	UCA3_SendStr(MESSAGE);
+	UCA3_SendStr("AT+CIPSEND=6\r\n");
+	UCA3_SendStr("QUIT");
 }
 
-void esp_sendemail(){
-	esp_cmd("AT+CIPMUX=1\r\n");
-	esp_cmd("AT + CIPSERVER = 1,"SRV_PORT"\r\n");
-	esp_cmd("AT+CIPSTART=4\"TCP\",\"" EMAILFROM "\"," EMAILFROM_PORT"\r\n"); 
-	esp_cmd("AT + CIPSEND = 4,"NBYTES_MESSAGE"\r\n");   
-
-	// Verificar o porquê dessa forma, verificar no smtp2go
-	esp_cmd("EHLO"IP);
-	esp_cmd("AUTH LOGIN");
-    esp_cmd(EMAIL64);    				// email ase 64 format  (LOGIN em smtp2go)
-    esp_cmd(" "PASSWORD64);				// password base 64 format
-    esp_cmd("MAIL FROM:<"EMAILFROM">");
-    esp_cmd("RCPT To:<"EMAILTO">");
-    esp_cmd("DATA");
-    esp_cmd(MESSAGE);
-    esp_cmd("AT+CIPSEND=6\r\n");
-    esp_cmd("QUIT");
+#pragma vector=USCI_A3_VECTOR
+__interrupt void USCI3RX_ISR(void){
+    RET[i++] = UCA3RXBUF;
+    //_BIC_SR_IRQ(LPM0_bits);
+    RX=1;
 }
 
 

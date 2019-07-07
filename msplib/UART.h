@@ -18,11 +18,9 @@
 void UCA3_Config(int baudRate, int parity,
                  int isMSB, int nStops);
 
-void UCA3_Send(uint8_t data);
-
-void UART_BbSend(uint8_t data);
-
-uint8_t UART_BbGet();
+void UCA3_Send(unsigned char data);
+char UCA3_Get();
+void UCA3_SendStr(char* str);
 
 #endif
 
