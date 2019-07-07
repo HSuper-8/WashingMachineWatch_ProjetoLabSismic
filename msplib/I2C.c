@@ -59,6 +59,11 @@ void I2C_config_B2(int isMaster, uint8_t ownAddr,
     P7SEL0 |=  BIT1;
     P7SEL1 &= ~BIT1;
 
+    P7REN &= ~BIT0;
+    P7REN &= ~BIT1;
+    P7OUT |=  BIT0 | BIT1;
+
+
     UCB2CTLW0 = UCSWRST;
 
     UCB2CTLW0 = UCSYNC      |
