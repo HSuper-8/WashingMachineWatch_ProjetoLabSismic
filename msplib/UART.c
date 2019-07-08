@@ -1,6 +1,6 @@
 #include "UART.h"
 
-void UCA3_Config(int baudRate, int parity, int isMSB, int nStops){
+void UCA3_Config(uint32_t baudRate, int parity, int isMSB, int nStops){
     UCA3CTLW0  = UCSWRST;
 
     UCA3CTLW0  = (isMSB?  UCMSB : 0)               |

@@ -15,7 +15,7 @@
 #define TXDIR                                               P4DIR
 #define TXBIT                                               BIT1
 
-void UCA3_Config(int baudRate, int parity,
+void UCA3_Config(uint32_t baudRate, int parity,
                  int isMSB, int nStops);
 
 void UCA3_Send(unsigned char data);
