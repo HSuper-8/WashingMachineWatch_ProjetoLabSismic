@@ -6,15 +6,15 @@
  * main.c
  */
 int main(void){
-	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
-	PM5CTL0 ^= LOCKLPM5;        // High-impedance treatment
+	WDTCTL = WDTPW | WDTHOLD;	     // stop watchdog timer
+	PM5CTL0 ^= LOCKLPM5;             // High-impedance treatment
 
 	esp_config();
 
 	__enable_interrupt();
 
-	esp_init();
-	esp_sendemail();
+	esp_cmd("AT\r\n", 1000, "OK");	// AT—Tests AT Startup
+	
 	return 0;
 }
 

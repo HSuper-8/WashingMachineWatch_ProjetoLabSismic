@@ -4,14 +4,12 @@
 char RET[200]={0};
 unsigned char RX = 0;
 int i=0;
-int val=0;
 
-int CIPCLOSE=0;
-int AT=0;
-int RST=0;
+int COMMUNICATION=0;
 
 // BRCLK 		Baud Rate 	UCOS16 		UCBRx 	UCBRFx 		UCBRSx
 // 1000000 	    115200 		0 			8 		- 			0xD6
+
 void delay(int t){
     while(t--);
 }
@@ -21,48 +19,31 @@ void esp_config(){
 }
 
 void clear_buffer(){
-    int j = 0;
-    for(j=199; j>=0; j--)
+    //int j = 0;
+    for(int j=199; j>=0; j--)
         RET[j] = 0;
     i = 0;
     RX = 0;
 }
 
 int esp_cmd(char* cmd, int t, char* ret){
-
-    UCA3_SendStr(cmd);
-
-
-	delay(t);
-	if(strstr(RET, ret) != NULL){
-	    AT=1;
-	    //clear_buffer();
+    UCA3_SendStr(cmd);    				// envia comando
+	delay(t);							// espera um pouco
+	if(strstr(RET, ret) != NULL){		// se a resposta de retorno vier (ver documentação)
+	    COMMUNICATION=1;				// seta flag (para debug)
+	    clear_buffer();					// limpa vetor que guarda resposta
 	    return 1;
 	}
-	//clear_buffer();
+	clear_buffer();
     return 0;
 }
 
 void esp_init(){
 	esp_cmd("AT\r\n", 1000, "OK");		        // AT—Tests AT Startup
-	if(strstr(RET, "OK") != NULL) {
-	    AT=1;
-	}
-	AT=0;
-	clear_buffer();
-
 	esp_cmd("AT+CIPCLOSE\r\n",1000,"OK");       //Closes the TCP/UDP/SSL Connection
-	if(strstr(RET, "OK")) CIPCLOSE=1;
-	clear_buffer();
-
-	val = esp_cmd("AT+RST\r\n",2000,"ready");   //Restarts the Module
-	if(strstr(RET, "ready")) RST=1;
-	clear_buffer();
-
-	esp_cmd("AT+CWMODE=3\r\n",1000,"OK");
-	clear_buffer();
-	esp_cmd("AT+CWJAP=\"" SSID "\",\""WIFIPASS"\"\r\n",7000,"OK");  // connecting wifi
-	clear_buffer();
+	esp_cmd("AT+RST\r\n",2000,"ready");   		//Restarts the Module
+	esp_cmd("AT+CWMODE=3\r\n",1000,"OK");		// 
+	esp_cmd("AT+CWJAP=\"" SSID "\",\""WIFIPASS"\"\r\n",7000,"OK");  // connecting wifi (mudar defines!)
 	esp_cmd("AT+CIFSR\r\n",1000,"");			// Gets the local IP address
 
 	//esp_cmd(AT+CIPSTART=\"TCP\",\"" SRV_ADDR "\"," SRV_PORT); 
@@ -93,7 +74,6 @@ void esp_sendemail(){
 #pragma vector=USCI_A3_VECTOR
 __interrupt void USCI3RX_ISR(void){
     RET[i++] = UCA3RXBUF;
-    //_BIC_SR_IRQ(LPM0_bits);
     RX=1;
 }
 
