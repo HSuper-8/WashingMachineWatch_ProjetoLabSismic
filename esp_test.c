@@ -11,8 +11,6 @@ int main(void){
 
 	esp_config();
 
-	__enable_interrupt();
-
 	esp_cmd("AT\r\n", 1000, "OK");	// AT—Tests AT Startup
 	
 	return 0;

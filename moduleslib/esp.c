@@ -2,8 +2,8 @@
 #include "UART.h"
 
 char RET[200]={0};
-unsigned char RX = 0;
-int i=0;
+volatile unsigned char RX = 0;
+volatile unsigned int i=0;
 
 int COMMUNICATION=0;
 
@@ -19,14 +19,15 @@ void esp_config(){
 }
 
 void clear_buffer(){
-    //int j = 0;
-    for(int j=199; j>=0; j--)
+    int j = 0;
+    for(j=199; j>=0; j--)
         RET[j] = 0;
     i = 0;
     RX = 0;
 }
 
 int esp_cmd(char* cmd, int t, char* ret){
+	__enable_interrupt();
     UCA3_SendStr(cmd);    				// envia comando
 	delay(t);							// espera um pouco
 	if(strstr(RET, ret) != NULL){		// se a resposta de retorno vier (ver documentação)
