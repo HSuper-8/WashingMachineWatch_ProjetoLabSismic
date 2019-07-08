@@ -14,8 +14,8 @@ int main(void)
     volatile int i = 0;
     uint8_t a_scale, g_scale;
 
-	WDTCTL = WDTPW | WDTHOLD;	                // stop watchdog timer
-	
+    WDTCTL = WDTPW | WDTHOLD;                   // stop watchdog timer
+
     setupPorts();                               // Setup ports
     setupTimerA0();                             // Setup timer
     I2C_config_B2(setMaster, 0x42,              // Setup I2C interface
@@ -28,6 +28,8 @@ int main(void)
     a_scale = MPU6050_ACCEL_FS_2;              //2, 4, 8 or 16 g
     g_scale = MPU6050_GYRO_FS_250;              //250, 500, 1000 or 2000 degrees/second
 
+    B2_STT_STP(MPU6050_DEFAULT_ADDRESS);
+
     // Wake up MPU
     mpuSetByte(MPU6050_RA_PWR_MGMT_1, 0x01);
     waitFor(250);
@@ -37,6 +39,7 @@ int main(void)
     if(reply[0]==MPU6050_DEFAULT_ADDRESS){}
     else while(1){P1OUT |= BIT0;};              // Reports error with Red LED
 
+    waitFor(250);
     // MPU config and reset
     mpuSetByte(MPU6050_RA_PWR_MGMT_1, 0x80);    //MPU Reset
     waitFor(250);
@@ -71,5 +74,3 @@ int main(void)
 
     return 0;
 }
-
-

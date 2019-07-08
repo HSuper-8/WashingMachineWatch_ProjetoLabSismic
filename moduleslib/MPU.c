@@ -47,9 +47,16 @@ void waitFor(unsigned int time_ms){
 // the internal register "addr" of mpu
 void mpuSetByte(uint8_t addr, uint8_t data)
 {
+    MPU_I2C_B2_write_byte(addr, data);
+}
+
+
+// MPU get byte - writes register address
+// from MPU's and read data from it
+uint8_t mpuGetByte(uint8_t addr){
     I2C_B2_write_byte(MPU6050_DEFAULT_ADDRESS, addr);
     delay(50);
-    I2C_B2_write_byte(MPU6050_DEFAULT_ADDRESS, data);
+    return I2C_B2_read_byte(MPU6050_DEFAULT_ADDRESS);
 }
 
 void MPU_I2C_B2_write_byte(uint8_t addr, char data){
@@ -93,14 +100,6 @@ void MPU_I2C_B2_write_byte(uint8_t addr, char data){
     delay(50);
 }
 
-// MPU get byte - writes register address
-// from MPU's and read data from it
-uint8_t mpuGetByte(uint8_t addr){
-    I2C_B2_write_byte(MPU6050_DEFAULT_ADDRESS, addr);
-    delay(50);
-    return I2C_B2_read_byte(MPU6050_DEFAULT_ADDRESS);
-}
-
 uint8_t MPU_I2C_B2_read_byte(uint8_t addr){
     int8_t data;
 
@@ -119,18 +118,18 @@ uint8_t MPU_I2C_B2_read_byte(uint8_t addr){
             P1OUT |= BIT0;
             while(1);
     }
-    while(!(UCB2IFG & UCTXIFG0));                   // Awaits transmition finish
 
+    UCB2I2CSA = MPU6050_DEFAULT_ADDRESS;
     UCB2CTLW0 &= ~UCTR;
     UCB2CTLW0 |= UCTXSTT;
 
-    while (UCB2CTLW0 & UCTXSTT);                    // Awaits start of communication
+    while (UCB2CTLW0 & UCTXSTT);
 
     UCB2CTLW0 |= UCTXSTP;
+
     while (!(UCB2IFG & UCRXIFG));
 
     data = UCB2RXBUF;
-    delay(50);
 
     return data;
 }
