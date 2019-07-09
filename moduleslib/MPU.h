@@ -397,12 +397,10 @@
 #define TRANSMITTER     00
 #define RECEIVER        01
 
-float           ACCEL[3],GYRO[3];      //converted value
-extern      int offset_int[6];                   //Offset para accel x y z e gyro x y z
-
 //Functions ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void    setupPorts          (void);
 void    setupTimerA0        (void);
+void    setupTimerA1        (void);
 void    waitFor             (unsigned int time_ms);
 void    mpuSetByte          (uint8_t addr, uint8_t data);
 uint8_t mpuGetByte          (uint8_t addr);

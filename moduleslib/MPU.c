@@ -26,6 +26,22 @@ void setupTimerA0(){
     TA0CCR0  = 32767;                          // Count to 1s @32kHz
 }
 
+// Setup Timer A1 - setups timer A1
+void setupTimerA1(){
+
+    // Timer configuration
+    TA1CTL = TASSEL__ACLK      |              // Select ACLK as clock source
+             ID__1             |              // Set clock divider to 1.
+             MC__UP            |              // Setup but do not count
+             TACLR             |              // Clear timer
+             0;
+
+
+    TA1CCTL0 |= CCIE;
+    // Timer A0 - CCR0 configuration
+    TA1CCR0  = 3277;                          // Count to 1s @32kHz
+}
+
 // Wait for - Counts to time_ms milliseconds until
 // time interrupt triggered
 void waitFor(unsigned int time_ms){
