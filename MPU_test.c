@@ -17,6 +17,9 @@ int             gyro_avg;
 // Samples amount in the 1s period
 int sample_num=0;
 
+// Samples average amount
+int j=0;
+
 // Accelerometer states
 // START: Initial values from accelerometer(initial values is floating
 // glitched around values)
@@ -120,7 +123,7 @@ int main(void)
 __interrupt void TA1_CCR0_ISR() {
     switch (ACCL_STATE) {
     case START:
-        // Bypass 7 first accelerometer readings
+        // Bypass 3 first accelerometer readings
         // (bad measure values ,awaits for a
         //  steady accelerometer state)
 
