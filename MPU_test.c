@@ -1,7 +1,6 @@
 #include <msp430.h> 
 #include "MPU.h"
 
-float           measures[6];
 // Lasts samples from MPU array
 uint8_t         reply[14];
 
@@ -12,29 +11,39 @@ int             gy;
 //Converted value
 float           GYRO;
 
-int             gyro_avg[100];
-int i=0;
-int j=0;
+// Gyroscope measures 10 samples average in 1s period
+int             gyro_avg;
+
+// Samples amount in the 1s period
+int sample_num=0;
 
 // Accelerometer states
-// Start: Initial values from accelerometer(initial values is floating
+// START: Initial values from accelerometer(initial values is floating
 // glitched around values)
-// Sample: begins to process the gyroscope's axis y value
+// SAMPLE: begins to process the gyroscope's axis y value
 // and check its value(indicates an idle or a movement)
-enum ACCL_STATE {start, sample} ACCL_STATE=start;
+enum ACCL_STATE {START, SAMPLE} ACCL_STATE=START;
 
-// IdleState: Detects washing finish, and send email
-void IdleState();
+// Washing machine states
+// IDLE: The devise is not triggered yet
+// WASHING: The devise starts to watch the washing machine state
+// FINISH: The devise detects washing finish, prepares to send a email
+enum WASHING_STATE {IDLE, WASHING,FINISH} WASHING_STATE=IDLE;
+
+// FinishState: Detects washing finish, and send email
+void FinishState();
 
 // MovementState: stand by until IdleState(don't send email)
 void MovementState();
+
+// ON/Reset mode: blinks red and green LED to warn device turning on/reset
+void OnMode();
 
 /**
  * main.c
  */
 int main(void)
 {
-    volatile int i = 0;
     uint8_t a_scale, g_scale;
 
     WDTCTL = WDTPW | WDTHOLD;                   // stop watchdog timer
@@ -77,20 +86,29 @@ int main(void)
     mpuSetByte(MPU6050_RA_GYRO_CONFIG , g_scale<<3);
     mpuSetByte(MPU6050_RA_ACCEL_CONFIG , a_scale<<3);
 
-    // Waits for 4s(awaits for a steady accelerometer state)
     mpuRead_nb(MPU6050_RA_GYRO_YOUT_H, reply, 2);
+
+    OnMode();
+
+    // Waiting user's trigger command
+    while(P5IN & BIT5);
+
+    // Triggered mode
     waitFor(1000);
-    P1OUT |= BIT1;
+    P1OUT |= BIT0;
     waitFor(1000);
-    P1OUT &= ~BIT1;
+    P1OUT &= ~BIT0;
     waitFor(1000);
-    P1OUT |= BIT1;
+    P1OUT |= BIT0;
     waitFor(1000);
-    P1OUT &= ~BIT1;
+    P1OUT &= ~BIT0;
 
     __enable_interrupt();
 
     while(1){
+
+
+
         //Get one full reading from accelerometers, giroscope and temperature
         mpuRead_nb(MPU6050_RA_GYRO_YOUT_H, reply, 2);
         gy = (int) ((reply[0] << 8) | reply[1]) ;
@@ -104,22 +122,37 @@ int main(void)
 #pragma vector= TIMER1_A0_VECTOR
 __interrupt void TA1_CCR0_ISR() {
     switch (ACCL_STATE) {
-    case start:
+    case START:
         // Bypass 7 first accelerometer readings
-        // (bad measure values)
-        if(j>7){
-            ACCL_STATE = sample;
+        // (bad measure values ,awaits for a
+        //  steady accelerometer state)
+
+        if(j>3){
+            // Enters in SAMPLE mode, i.e. start gyroscope values
+            // analysis;
+            // and enters in WASHING mode(when triggered washing machine
+            // is already on).
+            WASHING_STATE = WASHING;
+            ACCL_STATE = SAMPLE;
+            waitFor(500);
+            P1OUT |= BIT1;
+            waitFor(500);
+            P1OUT &= ~BIT1;
+            waitFor(500);
+            P1OUT |= BIT1;
+            waitFor(500);
+            P1OUT &= ~BIT1;
         }
         break;
 
-    case sample:
+    case SAMPLE:
         // Compares if gyroscope sampling average at axis-y
         // indicates a movement pattern(values out of range
         // 190 < w < 250)
-        if(i == 10)
+        if(sample_num == 10)
         {
             // If its moving(washing machine's on)
-            if(!(gyro_avg[j] < 255 && gyro_avg[j] > 190))
+            if(!(gyro_avg < 255 && gyro_avg > 190))
             {
                 MovementState();
             }
@@ -127,34 +160,58 @@ __interrupt void TA1_CCR0_ISR() {
             // It's not moving(washing machine's off)
             else
             {
-                IdleState();
+                FinishState();
             }
         }
         break;
     }
 
     // Gyroscope sampling average computing(10 values)
-    if(i < 10){
-        gyro_avg[j] += GYRO/10;
-        i++;
+    if(sample_num < 10){
+        gyro_avg += GYRO/10;
+        sample_num++;
     }
 
     // Surpassing of 10 values, starts to compute
     // average again, and resets its value
     else {
-        i = 0;
-        j++;
-        j %= 100;
+        sample_num = 0;
+        gyro_avg = 0;
     }
 }
 
-void IdleState(){
+void FinishState(){
+    // --------LED debug--------
     P1OUT &= ~BIT0;
     // Waits 6 seconds, to confirm washing finish
     waitFor(2000);
     waitFor(2000);
     waitFor(2000);
+
+    // If none movement is detected
+    if(gyro_avg < 255 && gyro_avg > 190){
+        WASHING_STATE = FINISH;
+    }
 }
 void MovementState(){
+    // --------LED debug--------
     P1OUT |= BIT0;
 }
+
+void OnMode(){
+    // On or reset board notice:
+    // Blinks red and green LED
+    WASHING_STATE = IDLE;
+    P1OUT |= BIT0;
+    P1OUT |= BIT1;
+    waitFor(1000);
+    P1OUT &= ~BIT0;
+    P1OUT &= ~BIT1;
+    waitFor(1000);
+    P1OUT |= BIT0;
+    P1OUT |= BIT1;
+    waitFor(1000);
+    P1OUT &= ~BIT0;
+    P1OUT &= ~BIT1;
+}
+
