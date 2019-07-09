@@ -106,9 +106,6 @@ int main(void)
     __enable_interrupt();
 
     while(1){
-
-
-
         //Get one full reading from accelerometers, giroscope and temperature
         mpuRead_nb(MPU6050_RA_GYRO_YOUT_H, reply, 2);
         gy = (int) ((reply[0] << 8) | reply[1]) ;
