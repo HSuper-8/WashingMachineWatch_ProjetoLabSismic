@@ -3,12 +3,7 @@
 void UCA3_Config(uint32_t baudRate, int parity, int isMSB, int nStops){
     UCA3CTLW0  = UCSWRST;
 
-    UCA3CTLW0  = (isMSB?  UCMSB : 0)               |
-                 (parity? UCPEN : 0)               |
-                 (parity == PARITY_EVEN? UCPAR : 0)|
-                 (nStops == 2? UCSPB : 0)          |
-                  UCSSEL__SMCLK                    |
-                  UCSWRST;
+    UCA3CTLW0  = UCSSEL__SMCLK | UCSWRST;
 
     uint32_t brDiv = (1000000<<3)/baudRate;
     UCA3BRW = brDiv>>3;
@@ -23,7 +18,7 @@ void UCA3_Config(uint32_t baudRate, int parity, int isMSB, int nStops){
 }
 
 void UCA3_Send(unsigned char data){
-    while(!(UCA3IFG & UCTXIFG));
+    while(!(UCA3IFG & UCTXIFG) && (UCA3STATW & UCBUSY));
     UCA3TXBUF = data;
 }
 
