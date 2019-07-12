@@ -177,12 +177,15 @@ __interrupt void TA1_CCR0_ISR() {
     else {
         sample_num = 0;
         gyro_avg = 0;
+        j++;
     }
 }
 
 void FinishState(){
     // --------LED debug--------
+    // LED Verde ligado
     P1OUT &= ~BIT0;
+    P1OUT |= BIT1;
     // Waits 6 seconds, to confirm washing finish
     waitFor(2000);
     waitFor(2000);
@@ -195,7 +198,9 @@ void FinishState(){
 }
 void MovementState(){
     // --------LED debug--------
+    // LED Vermelho ligado
     P1OUT |= BIT0;
+    P1OUT &= ~BIT1;
 }
 
 void OnMode(){
